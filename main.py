@@ -24,19 +24,52 @@ class Circle:
 def generate_initial_circles():
     """Circles with which to instantiate fractal."""
 
-    c1 = Circle(0, 0, 100, False)
-    c2 = Circle(-50, 0, 50, True)
-    # c3 = Circle(0, 200 / 3, 100 / 3, True)
-    c3 = Circle(50, 0, 50, True)
+    c1 = Circle(0, 0, 100, False)  # bounding circle
+    
+    # Equally-divided
+    #c2, c3 = Circle(-50, 0, 50, True). Circle(50, 0, 50, True)
 
-    # c2 = Circle(-40, 0, 60, False)
-    # c3 = Circle(60, 0, 40, False)
+    # Unequal sizes
+    c2, c3 = Circle(-40, 0, 60, True), Circle(60, 0, 40, True)
 
     return [c1, c2, c3]
 
 
+def draw_circles(circles_1, circles_2, title):
+    """Plot a list of circle objects."""
+
+    fig, ax = plt.subplots(figsize=(15, 15))
+    
+    for c in circles_1:
+        # print(c)
+        circle = patches.Circle(
+            (c.x, c.y), radius=c.r, color="blue", fill=True, alpha=0.1
+        )
+        ax.add_patch(circle)
+    
+    for c in circles_2:
+        # print(c)
+        circle = patches.Circle(
+            (c.x, c.y), radius=c.r, color="red", fill=True, alpha=0.5
+        )
+        ax.add_patch(circle)
+
+
+    ax.set_xlim(-400, 400)
+    ax.set_ylim(-400, 400)
+    ax.set_aspect("equal", adjustable="box")  # Ensures the circle is round
+    ax.set_title(title)
+    plt.axis("off")
+    plt.show()
+
+    return
+
+
+
+
 def compute_tangent_circles(circle_list):
     """Takes three circle objects and returns both mutually tangent circles."""
+
     # print("\n*** Computing tangent circles ***")
 
     C1, C2, C3 = circle_list
@@ -44,7 +77,8 @@ def compute_tangent_circles(circle_list):
     # Compute radii
     sum_term = C1.k + C2.k + C3.k
 
-    val = C1.k * C2.k + C1.k * C3.k + C2.k * C3.k  # handle finite precision
+    # Handle negative numbers in square root
+    val = C1.k * C2.k + C1.k * C3.k + C2.k * C3.k
     if val < 0:
         sqrt_term = 0
     else:
@@ -73,72 +107,66 @@ def compute_tangent_circles(circle_list):
     return [C4, C5]
 
 
-def print_circle_object(circle):
-    """"""
-    print(circle)
-    for attr in dir(circle):
-        print(f"{attr}: {getattr(circle, attr)}")
+def main(): 
+    
+    circles = generate_initial_circles()
+    #draw_circles(circles, "Initial circles")
+
+    triples = [circles.copy()]
 
 
-def draw_circles(circles, title):
-    """Plot a list of circle objects."""
+    print(f"\nInitial triples:\n{triples}")
 
-    fig, ax = plt.subplots()
-    for c in circles:
-        # print(c)
-        circle = patches.Circle(
-            (c.x, c.y), radius=c.r, color="blue", fill=True, alpha=0.1
-        )
-        ax.add_patch(circle)
+    while True:
 
-    ax.set_xlim(-100, 100)
-    ax.set_ylim(-100, 100)
-    ax.set_aspect("equal", adjustable="box")  # Ensures the circle is round
-    # ax.set_title(title)
-    plt.axis("off")
-    plt.show()
+        new_triples = []
+        print(40 *'-')
+        
+        for triple in triples:
+
+            print(f"\nTriple is of length {len(triple)}.")
+            print(triple)
+
+            tangent_circles = compute_tangent_circles(triple)
+
+            #print(f"\nTangent circles:\n{tangent_circles}")
+
+            for circle in tangent_circles:
+
+                print(f"\nExamining candidate circle:  {circle}")
+
+                # Check if circle is new
+                eps = 0.1
+                new_circle = True
+                for c in circles:
+                    if abs(c.x - circle.x) < eps and abs(c.y - circle.y) < eps and abs(c.r - circle.r) < eps:
+                        new_circle = False
+                 
+                if new_circle:
+                    circles.append(circle)
+
+                    #print(circle)
+                    #print(triple)
+
+                    new_triples.append([circle, triple[0], triple[1]])
+                    new_triples.append([circle, triple[0], triple[2]])
+                    new_triples.append([circle, triple[1], triple[2]])
+
+                    print(f"\nCircle triple:")
+                    for c in triple:
+                        print(c)
+
+                    draw_circles(triple, [circle], "Mon")
+                    #f = input()
+        
+        triples = new_triples
+
+            
+
 
     return
 
 
-################################################
+if __name__ == "__main__":
+    main()
 
-circles = generate_initial_circles()
-triples = [circles]
-# print(f"\nInitial circles:\n{triples}")
-
-draw_circles(circles, "Initial circles")
-
-eps = 0.1
-count = 0
-while True:
-    new_triples = []
-    count += 1
-    # print(f"\n\nNext loop.  Number of triples to process:  {len(triples)}")
-    for triple in triples:
-        # print(f"\nCurrent triple:\n{triple}")
-        new_circles = compute_tangent_circles(triple)
-
-        for n in new_circles:
-            is_new = True
-            for c in circles:
-                if (
-                    abs(c.x - n.x) < eps
-                    and abs(c.y - n.y) < eps
-                    and abs(c.r - n.r) < eps
-                ):
-                    is_new = False
-                    break
-
-            if is_new:
-                circles.append(n)
-                new_triples.append([n, triple[0], triple[1]])
-                new_triples.append([n, triple[0], triple[2]])
-                new_triples.append([n, triple[1], triple[2]])
-
-    if len(new_triples) == 0:
-        break
-
-    triples = new_triples
-
-    draw_circles(circles, f"Generation {count} circles")
