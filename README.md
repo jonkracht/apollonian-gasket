@@ -2,7 +2,7 @@
 Draw Apollonion gasket (fractal made of mutually tangent circles)
 
 
-## Back ground
+## Background
 
 Inspired by Coding Train video on Youtube:  https://youtu.be/6UlGLB_jiCs
 
